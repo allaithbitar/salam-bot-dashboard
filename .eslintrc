@@ -1,0 +1,6 @@
+{
+  "extends":["preact"],
+  "rules":{
+    "jest/no-deprecated-functions":"off"
+  }
+}
