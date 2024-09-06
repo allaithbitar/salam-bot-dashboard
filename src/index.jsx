@@ -19,7 +19,7 @@ export function App() {
         <AppQueryClientProvider>
           <DirectionProvider dir="rtl">
             <UserContextProvider>
-              <div className="py-4 container mx-auto h-[100dvh] dark">
+              <div className="p-4 mx-auto h-[100dvh] dark">
                 <Router>
                   <LoginPage path="/" />
                   <AuthPage path="/auth" />

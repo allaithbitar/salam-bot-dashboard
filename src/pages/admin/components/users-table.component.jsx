@@ -27,7 +27,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDownIcon } from "lucide-react";
+import { ArrowUpDownIcon, RefreshCwIcon } from "lucide-react";
 import { useMemo, useState } from "preact/hooks";
 import EditUserModal from "./edit-user-modal.component";
 import { USER_TYPE_ENUM, USER_TYPE_ENUM_TO_READABLE } from "@/constants";
@@ -47,7 +47,7 @@ const UsersTable = () => {
     pageSize: 10,
   });
 
-  const { data: usersData, isFetching } = useGetAllUsersQuery();
+  const { data: usersData, isFetching, refetch } = useGetAllUsersQuery();
 
   const columns = useMemo(
     () => [
@@ -219,6 +219,7 @@ const UsersTable = () => {
     [],
   );
   const memoRows = useMemo(() => usersData?.data ?? [], [usersData]);
+
   const table = useReactTable({
     data: memoRows,
     columns,
@@ -242,10 +243,20 @@ const UsersTable = () => {
   return (
     <div className="w-full flex flex-col gap-2 h-full">
       <div className="flex gap-2 items-center flex-col lg:flex-row mb-2">
-        <div className="ml-auto flex-shrink-0 bg-secondary p-1.5 px-4 rounded-sm w-full md:w-fit">
-          <p className="text-lg font-semibold">
-            العدد الكلي للسمتخدمين : ( {usersData?.count} )
-          </p>
+        <div className="flex flex-row gap-2 items-center shrink-0 w-full lg:w-fit">
+          <Button
+            disabled={isFetching}
+            onClick={refetch}
+            variant="outline"
+            className="w-[40px] aspect-square p-0 shrink-0 rounded-sm"
+          >
+            <RefreshCwIcon className="w-5" />
+          </Button>
+          <div className="bg-secondary p-1.5 px-4 rounded-sm flex-1 md:w-fit shrink-0">
+            <p className="text-lg font-semibold">
+              العدد الكلي للسمتخدمين : ( {usersData?.count} )
+            </p>
+          </div>
         </div>
         <Input
           disabled={isFetching}

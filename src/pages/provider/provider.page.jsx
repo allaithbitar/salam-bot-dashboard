@@ -28,11 +28,7 @@ import {
 } from "@/hooks/queries";
 import useReducerState from "@/hooks/use-reducer-state";
 import { decrypt, encrypt } from "@/lib/crypto-js";
-import {
-  isDuplicateNicknameError,
-  transformNickname,
-  transformPassword,
-} from "@/lib/helpers";
+import { isDuplicateNicknameError, transformNickname } from "@/lib/helpers";
 import { useEffect, useRef, useState } from "preact/hooks";
 
 const ProviderPreferencesForm = ({
@@ -48,7 +44,7 @@ const ProviderPreferencesForm = ({
   const originalDecryptedPassword = useRef(
     decrypt(providerServerSideDashboardAccountData.password),
   );
-  const [decryptedPassword, setDecryptedPassword] = useState(
+  const [decryptedPassword] = useState(
     decrypt(providerServerSideDashboardAccountData.password),
   );
 
@@ -180,11 +176,11 @@ const ProviderPreferencesForm = ({
               <SelectItem value={"5"}>5</SelectItem>
             </SelectContent>
           </Select>
-          <small className="text-muted-foreground">
+          <small className="text-muted-foreground mt-[-10px]">
             قيمة اعلى = فرصة اكبر لربطك مع مستفيد
           </small>
         </div>
-        <div className="flex flex-col gap-3">
+        {/* <div className="flex flex-col gap-3">
           <Label htmlFor="password">كلمة المرور :</Label>
           <Input
             disabled={disableInputs}
@@ -198,7 +194,7 @@ const ProviderPreferencesForm = ({
           {errors?.password && (
             <small className="text-red-500">{errors.password}</small>
           )}
-        </div>
+        </div> */}
 
         <Button disabled={disableSaveButton}>
           {isUpdatingUserPreferences ||
