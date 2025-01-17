@@ -8,6 +8,7 @@ import { DASHBOARD_USER_ROLE } from "@/constants";
 import { useUserContext } from "@/context/user/user.context";
 import { useDashboardLoginMutation } from "@/hooks/mutations";
 import useReducerState from "@/hooks/use-reducer-state";
+import { getErrorMessage } from "@/lib/helpers";
 import { useLocation } from "preact-iso";
 
 const LoginPage = () => {
@@ -38,7 +39,7 @@ const LoginPage = () => {
       toast({
         variant: "destructive",
         title: "حدث خطأ",
-        description: error.message,
+        description: getErrorMessage(error),
       });
     }
   };

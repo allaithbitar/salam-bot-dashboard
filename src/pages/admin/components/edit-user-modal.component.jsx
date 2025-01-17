@@ -17,15 +17,16 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { USER_TYPE_ENUM, USER_TYPE_ENUM_TO_READABLE } from "@/constants";
-import {
-  useUpdateUserFirstNameLastNameUsername,
-  useUpdateUserPreferencesMutation,
-} from "@/hooks/mutations";
+import { useUpdateUserPreferencesMutation } from "@/hooks/mutations";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import BotUserDashboardAccount from "./bot-user-dashboard-account.component";
 import { Separator } from "@/components/ui/separator";
 import { validateUserPreferences } from "@/constants/validators";
-import { isDuplicateNicknameError, transformNickname } from "@/lib/helpers";
+import {
+  getErrorMessage,
+  isDuplicateNicknameError,
+  transformNickname,
+} from "@/lib/helpers";
 import { useHasDashboardAccount } from "@/hooks/use-has-dashboard-account";
 import { LoadingSpinner } from "@/components/ui/loading";
 import { useGetUserDataForEditingQuery } from "@/hooks/queries";
@@ -36,23 +37,27 @@ const EditUserModal = ({ userToEditTgId, onClose }) => {
     data: userToEditData,
     isFetching: isFetchingUserData,
     isLoading: isLoadingUserData,
-  } = useGetUserDataForEditingQuery(userToEditTgId);
+  } = useGetUserDataForEditingQuery(userToEditTgId, {
+    enabled: !!userToEditTgId,
+  });
 
   const { toast } = useToast();
-  const { hasDashboardAccount } = useHasDashboardAccount(userToEditTgId);
+  const { hasDashboardAccount } = useHasDashboardAccount(userToEditTgId, {
+    enabled: !!userToEditTgId,
+  });
 
   const {
     mutateAsync: updateUserPreferencesAsync,
     isLoading: isUpdatingUserPreferences,
   } = useUpdateUserPreferencesMutation();
 
-  const {
-    mutateAsync: updateUserFirstNameLastNameUsername,
-    isLoading: isUpdatingUserFirstNameLastNameUsername,
-  } = useUpdateUserFirstNameLastNameUsername();
+  // const {
+  //   mutateAsync: updateUserFirstNameLastNameUsername,
+  //   isLoading: isUpdatingUserFirstNameLastNameUsername,
+  // } = useUpdateUserFirstNameLastNameUsername();
 
-  const isUpdatingUserData =
-    isUpdatingUserFirstNameLastNameUsername || isUpdatingUserPreferences;
+  // const isUpdatingUserData =
+  //   isUpdatingUserFirstNameLastNameUsername || isUpdatingUserPreferences;
 
   const [userData, setUserData] = useState({
     tg_id: 0,
@@ -65,18 +70,16 @@ const EditUserModal = ({ userToEditTgId, onClose }) => {
   });
   const originalUserData = useMemo(() => {
     if (!userToEditData) return null;
-    const userServerSideData = userToEditData.data[0];
+    const userServerSideData = userToEditData;
     return {
       tg_id: userServerSideData.tg_id,
       first_name: userServerSideData.first_name,
       last_name: userServerSideData.last_name,
       username: userServerSideData.username,
-      nickname: userServerSideData.bot_user_preferences?.nickname ?? "",
-      will_to_provide:
-        userServerSideData.bot_user_preferences?.will_to_provide ?? 0,
+      nickname: userServerSideData.preferences?.nickname ?? "",
+      will_to_provide: userServerSideData.preferences?.will_to_provide ?? 0,
       user_type:
-        userServerSideData.bot_user_preferences?.user_type ??
-        USER_TYPE_ENUM.Consumer,
+        userServerSideData.preferences?.user_type ?? USER_TYPE_ENUM.Consumer,
     };
   }, [userToEditData]);
 
@@ -87,10 +90,10 @@ const EditUserModal = ({ userToEditTgId, onClose }) => {
   //     first_name: userToEdit.first_name,
   //     last_name: userToEdit.last_name,
   //     username: userToEdit.username,
-  //     nickname: userToEdit.bot_user_preferences?.nickname ?? "",
-  //     will_to_provide: userToEdit.bot_user_preferences?.will_to_provide ?? 0,
+  //     nickname: userToEdit.preferences?.nickname ?? "",
+  //     will_to_provide: userToEdit.preferences?.will_to_provide ?? 0,
   //     user_type:
-  //       userToEdit?.bot_user_preferences?.user_type ?? USER_TYPE_ENUM.Consumer,
+  //       userToEdit?.preferences?.user_type ?? USER_TYPE_ENUM.Consumer,
   //   }),
   //   [userToEdit],
   // );
@@ -116,13 +119,13 @@ const EditUserModal = ({ userToEditTgId, onClose }) => {
     }
 
     try {
-      if (
-        originalUserData.first_name !== userData.first_name ||
-        userData.last_name !== originalUserData.last_name ||
-        originalUserData.username !== userData.username
-      ) {
-        await updateUserFirstNameLastNameUsername(userData);
-      }
+      // if (
+      //   originalUserData.first_name !== userData.first_name ||
+      //   userData.last_name !== originalUserData.last_name ||
+      //   originalUserData.username !== userData.username
+      // ) {
+      //   await updateUserFirstNameLastNameUsername(userData);
+      // }
       await updateUserPreferencesAsync({
         tg_id: userData.tg_id,
         nickname: userData.nickname,
@@ -136,8 +139,8 @@ const EditUserModal = ({ userToEditTgId, onClose }) => {
       });
     } catch (error) {
       //duplicates error code
-      let details = error.message;
-      if (isDuplicateNicknameError(error))
+      let details = getErrorMessage(error);
+      if (isDuplicateNicknameError(getErrorMessage(error)))
         details = "الاسم المستعار مستخدم من قبل مستخدم اخر";
       toast({
         variant: "destructive",
@@ -148,24 +151,22 @@ const EditUserModal = ({ userToEditTgId, onClose }) => {
   };
 
   useEffect(() => {
-    if (userToEditData?.data[0]) {
-      const userServerSideData = userToEditData.data[0];
+    if (userToEditData) {
+      const userServerSideData = userToEditData;
       setUserData({
         tg_id: userServerSideData.tg_id,
         first_name: userServerSideData.first_name,
         last_name: userServerSideData.last_name,
         username: userServerSideData.username,
-        nickname: userServerSideData.bot_user_preferences?.nickname ?? "",
-        will_to_provide:
-          userServerSideData.bot_user_preferences?.will_to_provide ?? 0,
+        nickname: userServerSideData.preferences?.nickname ?? "",
+        will_to_provide: userServerSideData.preferences?.will_to_provide ?? 0,
         user_type:
-          userServerSideData.bot_user_preferences?.user_type ??
-          USER_TYPE_ENUM.Consumer,
+          userServerSideData.preferences?.user_type ?? USER_TYPE_ENUM.Consumer,
       });
     }
   }, [userToEditData]);
 
-  const isFetchingOrUpdatingUserData = isFetchingUserData || isUpdatingUserData;
+  const isFetchingOrUpdatingUserData = isFetchingUserData;
 
   return (
     <Dialog open={!!userData} onOpenChange={onClose}>
@@ -181,7 +182,7 @@ const EditUserModal = ({ userToEditTgId, onClose }) => {
               <div className="flex flex-col gap-3 w-full">
                 <Label htmlFor="first_name">الاسم الاول</Label>
                 <Input
-                  disabled={isFetchingOrUpdatingUserData}
+                  disabled
                   id="first_name"
                   name="first_name"
                   value={userData.first_name}
@@ -191,7 +192,7 @@ const EditUserModal = ({ userToEditTgId, onClose }) => {
               <div className="flex flex-col gap-3 w-full">
                 <Label htmlFor="last_name">الاسم الاخير</Label>
                 <Input
-                  disabled={isFetchingOrUpdatingUserData}
+                  disabled
                   id="last_name"
                   name="last_name"
                   value={userData.last_name}
@@ -201,7 +202,7 @@ const EditUserModal = ({ userToEditTgId, onClose }) => {
               <div className="flex flex-col gap-3 w-full">
                 <Label htmlFor="username">اسم المستخدم</Label>
                 <Input
-                  disabled={isFetchingOrUpdatingUserData}
+                  disabled
                   id="username"
                   name="username"
                   value={userData.username}
@@ -309,11 +310,7 @@ const EditUserModal = ({ userToEditTgId, onClose }) => {
             </div>
 
             <Button disabled={isFetchingOrUpdatingUserData} className="w-full">
-              {isUpdatingUserData && !isLoadingUserData ? (
-                <LoadingSpinner size={25} />
-              ) : (
-                "حفظ"
-              )}
+              {isLoadingUserData ? <LoadingSpinner size={25} /> : "حفظ"}
             </Button>
             <Separator />
             {originalUserData && (

@@ -27,7 +27,6 @@ import {
   useGetProviderPreferences,
 } from "@/hooks/queries";
 import useReducerState from "@/hooks/use-reducer-state";
-import { decrypt, encrypt } from "@/lib/crypto-js";
 import { isDuplicateNicknameError, transformNickname } from "@/lib/helpers";
 import { useEffect, useRef, useState } from "preact/hooks";
 
@@ -42,10 +41,10 @@ const ProviderPreferencesForm = ({
   const { toast } = useToast();
   const [errors, setErrors] = useState(null);
   const originalDecryptedPassword = useRef(
-    decrypt(providerServerSideDashboardAccountData.password),
+    providerServerSideDashboardAccountData.password,
   );
   const [decryptedPassword] = useState(
-    decrypt(providerServerSideDashboardAccountData.password),
+    providerServerSideDashboardAccountData.password,
   );
 
   const {
@@ -86,11 +85,6 @@ const ProviderPreferencesForm = ({
           setErrors(_errors);
           return;
         }
-        await updateUserPreferencesAsync({
-          ...providerData,
-          tg_id: user.botUserId,
-          will_to_provide: Number(providerData.will_to_provide),
-        });
       }
       if (didChangeThePassword) {
         const _passwordError = validateNewPassword(decryptedPassword);
@@ -100,13 +94,14 @@ const ProviderPreferencesForm = ({
           });
           return;
         }
-        const encryptedPassword = encrypt(decryptedPassword);
         await updateDashboardAccountAsync({
-          bot_user_id: user.botUserId,
-          password: encryptedPassword,
+          tg_id: user.tg_id,
+          password: decryptedPassword,
         });
+
         originalDecryptedPassword.current = decryptedPassword;
       }
+
       toast({
         variant: "success",
         title: "تم حفظ التعديلات",
@@ -213,21 +208,22 @@ const ProviderPreferencesForm = ({
 const ProviderPage = () => {
   const { user } = useUserContext();
   const {
-    data,
+    data: providerServerSidePreferences,
     isFetching: isFetchingProviderServerSideProviderPreferencesData,
     isLoading: isLoadingProviderServerSidePreferencesData,
-  } = useGetProviderPreferences(user.botUserId);
+  } = useGetProviderPreferences(user.tg_id, {
+    enabled: !!user.tg_id,
+  });
 
   const {
-    data: dashboardAccountData,
+    data: providerServerSideDashboardAccountData,
     isFetching: isFetchingProviderServerSideDashboardAccountData,
     isLoading: isLoadingProviderServerSideDashboardAccountData,
-  } = useGetDashboardAccountQuery(user.botUserId);
+  } = useGetDashboardAccountQuery(user.tg_id, {
+    enabled: !!user.tg_id,
+  });
 
   const [providerData, setProviderData] = useReducerState();
-  const providerServerSidePreferences = data?.data[0];
-  const providerServerSideDashboardAccountData = dashboardAccountData?.data[0];
-
   useEffect(() => {
     if (providerServerSidePreferences) {
       setProviderData({

@@ -121,7 +121,7 @@ const UsersTable = () => {
           );
         },
       }),
-      columnHelper.accessor((row) => row.bot_user_preferences?.nickname, {
+      columnHelper.accessor((row) => row.preferences?.nickname, {
         id: "nickname",
         filterFn: "includesString",
         header: ({ column }) => {
@@ -164,7 +164,7 @@ const UsersTable = () => {
         },
       }),
 
-      columnHelper.accessor((row) => row.bot_user_preferences?.user_type, {
+      columnHelper.accessor((row) => row.preferences?.user_type, {
         id: "user_type",
         header: "نوع المستخدم",
         filterFn: "equals",
@@ -172,37 +172,33 @@ const UsersTable = () => {
         cell: ({ cell }) => USER_TYPE_ENUM_TO_READABLE[cell.getValue()],
       }),
 
-      columnHelper.accessor(
-        (row) => row.bot_user_preferences?.will_to_provide,
-        {
-          id: "will_to_provide",
-          filterFn: "equals",
-          sortingFn: "basic",
-          header: ({ column }) => {
-            return (
-              <Button
-                className="px-2"
-                variant="ghost"
-                onClick={() =>
-                  column.toggleSorting(column.getIsSorted() === "asc")
-                }
-              >
-                الاولوية في تقديم الرعاية
-                <ArrowUpDownIcon className="ms-2 h-4 w-4" />
-              </Button>
-            );
-          },
-
-          cell: ({ cell }) => {
-            if (
-              cell.row.original.bot_user_preferences?.user_type ===
-              USER_TYPE_ENUM.Consumer
-            )
-              return "";
-            return <Progress value={cell.getValue() * 20} />;
-          },
+      columnHelper.accessor((row) => row.preferences?.will_to_provide, {
+        id: "will_to_provide",
+        filterFn: "equals",
+        sortingFn: "basic",
+        header: ({ column }) => {
+          return (
+            <Button
+              className="px-2"
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              الاولوية في تقديم الرعاية
+              <ArrowUpDownIcon className="ms-2 h-4 w-4" />
+            </Button>
+          );
         },
-      ),
+
+        cell: ({ cell }) => {
+          if (
+            cell.row.original.preferences?.user_type === USER_TYPE_ENUM.Consumer
+          )
+            return "";
+          return <Progress value={cell.getValue() * 20} />;
+        },
+      }),
 
       columnHelper.display({
         id: "actions",
@@ -218,10 +214,9 @@ const UsersTable = () => {
     ],
     [],
   );
-  const memoRows = useMemo(() => usersData?.data ?? [], [usersData]);
 
   const table = useReactTable({
-    data: memoRows,
+    data: usersData ?? [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSorting,

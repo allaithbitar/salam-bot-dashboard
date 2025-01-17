@@ -8,7 +8,6 @@ export const withRole = (Component, role) => {
   return (...props) => {
     const location = useLocation();
     const { user } = useUserContext();
-    console.log({ user, role });
 
     if (user?.role !== role) {
       location.route("/");

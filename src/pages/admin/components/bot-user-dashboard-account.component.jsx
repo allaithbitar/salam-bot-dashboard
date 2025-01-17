@@ -9,12 +9,10 @@ import {
   useGenerateDashboardAccountMutation,
   useUpdateDashboardAccountMutation,
 } from "@/hooks/mutations";
-import { generateRandomPassword } from "@/lib/utils";
 import { useRef, useState } from "preact/hooks";
-import { decrypt, encrypt } from "@/lib/crypto-js";
 import { Checkbox } from "@/components/ui/checkbox";
 import { validateNewPassword } from "@/constants/validators";
-import { transformPassword } from "@/lib/helpers";
+import { getErrorMessage, transformPassword } from "@/lib/helpers";
 import { useHasDashboardAccount } from "@/hooks/use-has-dashboard-account";
 
 const HasNoAccount = ({ userData, originalUserData }) => {
@@ -25,13 +23,9 @@ const HasNoAccount = ({ userData, originalUserData }) => {
   } = useGenerateDashboardAccountMutation();
 
   const handleGenerateDashboardAccount = async () => {
-    const password = generateRandomPassword();
-    const encryptedPasssword = encrypt(password);
-
     try {
       await createDashboardAccountAsync({
-        bot_user_id: userData.tg_id,
-        password: encryptedPasssword,
+        tg_id: userData.tg_id,
       });
 
       toast({
@@ -39,11 +33,10 @@ const HasNoAccount = ({ userData, originalUserData }) => {
         title: "تم إنشاء حساب لوحة تحكم لهذا المستخدم",
       });
     } catch (error) {
-      let details = error.message;
       toast({
         variant: "destructive",
         title: "حدث خطأ",
-        description: details,
+        description: getErrorMessage(error),
       });
     }
   };
@@ -118,7 +111,9 @@ const DeleteAccountSection = ({
 
 const HasAccount = ({ userData, originalUserData }) => {
   const { toast } = useToast();
-  const { dashboardAccount } = useHasDashboardAccount(userData.tg_id);
+  const { dashboardAccount } = useHasDashboardAccount(userData.tg_id, {
+    enabled: !!userData.tg_id,
+  });
 
   const {
     mutateAsync: deleteDashboardAccountAsync,
@@ -129,12 +124,12 @@ const HasAccount = ({ userData, originalUserData }) => {
     mutateAsync: updateDashboardAccountAsync,
     isLoading: isUpdatingDashboardAccount,
   } = useUpdateDashboardAccountMutation();
-  const originalDecryptedPassword = useRef(decrypt(dashboardAccount.password));
+  const originalDecryptedPassword = useRef(dashboardAccount.password);
   const originalIsAdmin = useRef(
     dashboardAccount.role === DASHBOARD_USER_ROLE.Admin,
   );
   const [decryptedPassword, setDecryptedPassword] = useState(
-    decrypt(dashboardAccount.password),
+    dashboardAccount.password ?? "",
   );
   const [isAdmin, setIsAdmin] = useState(
     dashboardAccount.role === DASHBOARD_USER_ROLE.Admin,
@@ -144,18 +139,22 @@ const HasAccount = ({ userData, originalUserData }) => {
   const handleUpdatePassword = async () => {
     try {
       setPasswordError(null);
-      const error = validateNewPassword(decryptedPassword);
-      if (error) {
-        setPasswordError(error);
-        return;
+      if (decryptedPassword.length) {
+        const error = validateNewPassword(decryptedPassword);
+        if (error) {
+          setPasswordError(error);
+          return;
+        }
       }
-      const encrypted = encrypt(decryptedPassword);
       await updateDashboardAccountAsync({
-        bot_user_id: userData.tg_id,
-        password: encrypted,
+        tg_id: userData.tg_id,
+
         role: isAdmin
           ? DASHBOARD_USER_ROLE.Admin
           : DASHBOARD_USER_ROLE.Provider,
+        ...(decryptedPassword && {
+          password: decryptedPassword,
+        }),
       });
       toast({
         variant: "success",
@@ -167,7 +166,7 @@ const HasAccount = ({ userData, originalUserData }) => {
       toast({
         variant: "destructive",
         title: "حدث خطأ",
-        description: error.message,
+        description: getErrorMessage(error),
       });
     }
   };
@@ -175,7 +174,7 @@ const HasAccount = ({ userData, originalUserData }) => {
   const handleDeleteDashboardAccount = async () => {
     try {
       await deleteDashboardAccountAsync({
-        bot_user_id: userData.tg_id,
+        tg_id: userData.tg_id,
       });
 
       toast({
@@ -262,7 +261,9 @@ const HasAccount = ({ userData, originalUserData }) => {
 
 const BotUserDashboardAccount = ({ userData, originalUserData }) => {
   const { isLoadingDashboardAccount, hasDashboardAccount } =
-    useHasDashboardAccount(userData.tg_id);
+    useHasDashboardAccount(userData.tg_id, {
+      enabled: !!userData.tg_id,
+    });
 
   return (
     <div className="flex flex-col gap-3">
