@@ -47,7 +47,12 @@ const UsersTable = () => {
     pageSize: 10,
   });
 
-  const { data: usersData, isFetching, refetch } = useGetAllUsersQuery();
+  const {
+    data: usersData,
+    isFetching,
+    refetch,
+    error: usersDataError,
+  } = useGetAllUsersQuery();
 
   const columns = useMemo(
     () => [
@@ -215,8 +220,9 @@ const UsersTable = () => {
     [],
   );
 
+  const records = useMemo(() => usersData ?? [], [usersData]);
   const table = useReactTable({
-    data: usersData ?? [],
+    data: records,
     columns,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSorting,
@@ -249,7 +255,7 @@ const UsersTable = () => {
           </Button>
           <div className="bg-secondary p-1.5 px-4 rounded-sm flex-1 md:w-fit shrink-0">
             <p className="text-lg font-semibold">
-              العدد الكلي للسمتخدمين : ( {usersData?.count} )
+              العدد الكلي للسمتخدمين : ( {records.length} )
             </p>
           </div>
         </div>
@@ -336,7 +342,7 @@ const UsersTable = () => {
                       colSpan={columns.length}
                       className="h-24 text-center"
                     >
-                      {usersData.error ? (
+                      {usersDataError ? (
                         <p className="text-red-500">حدث خطأ</p>
                       ) : (
                         <p>لا يوجد بيانات لعرضها</p>
