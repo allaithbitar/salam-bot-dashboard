@@ -140,7 +140,7 @@ const EditUserModal = ({ userToEditTgId, onClose }) => {
     } catch (error) {
       //duplicates error code
       let details = getErrorMessage(error);
-      if (isDuplicateNicknameError(getErrorMessage(error)))
+      if (isDuplicateNicknameError(details))
         details = "الاسم المستعار مستخدم من قبل مستخدم اخر";
       toast({
         variant: "destructive",
@@ -166,7 +166,8 @@ const EditUserModal = ({ userToEditTgId, onClose }) => {
     }
   }, [userToEditData]);
 
-  const isFetchingOrUpdatingUserData = isFetchingUserData;
+  const isFetchingOrUpdatingUserData =
+    isFetchingUserData || isUpdatingUserPreferences;
 
   return (
     <Dialog open={!!userData} onOpenChange={onClose}>
