@@ -204,6 +204,34 @@ const UsersTable = () => {
           return <Progress value={cell.getValue() * 20} />;
         },
       }),
+      columnHelper.accessor((row) => row.rating.value, {
+        id: "rating",
+        filterFn: "equals",
+        sortingFn: "basic",
+        header: ({ column }) => {
+          return (
+            <Button
+              className="px-2"
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+            >
+              التقييم
+              <ArrowUpDownIcon className="ms-2 h-4 w-4" />
+            </Button>
+          );
+        },
+
+        cell: ({ cell }) => {
+          if (
+            cell.row.original.preferences?.user_type === USER_TYPE_ENUM.Consumer
+          )
+            return "";
+          const rating = cell.row.original.rating;
+          return `${rating.value.toFixed(1)} - (${rating.count} تقييمات)`;
+        },
+      }),
 
       columnHelper.display({
         id: "actions",
