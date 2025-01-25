@@ -18,5 +18,8 @@ export default ({ mode }) => {
       port: process.env.DASHBOARD_PORT,
       host: process.env.DASHBOARD_HOST,
     },
+    server: {
+      port: process.env.DASHBOARD_PORT,
+    },
   });
 };
