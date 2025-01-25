@@ -229,6 +229,8 @@ const UsersTable = () => {
           )
             return "";
           const rating = cell.row.original.rating;
+          if (!cell.row.original.rating.value) return "";
+
           return `${rating.value.toFixed(1)} - (${rating.count} تقييمات)`;
         },
       }),
