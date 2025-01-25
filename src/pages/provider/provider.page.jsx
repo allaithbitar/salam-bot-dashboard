@@ -27,7 +27,11 @@ import {
   useGetProviderPreferences,
 } from "@/hooks/queries";
 import useReducerState from "@/hooks/use-reducer-state";
-import { isDuplicateNicknameError, transformNickname } from "@/lib/helpers";
+import {
+  getErrorMessage,
+  isDuplicateNicknameError,
+  transformNickname,
+} from "@/lib/helpers";
 import { useEffect, useRef, useState } from "preact/hooks";
 
 const ProviderPreferencesForm = ({
@@ -102,13 +106,21 @@ const ProviderPreferencesForm = ({
         originalDecryptedPassword.current = decryptedPassword;
       }
 
+      if (didChangeNickname || didChangeWillToProvide) {
+        await updateUserPreferencesAsync({
+          tg_id: user.tg_id,
+          nickname: providerData.nickname,
+          will_to_provide: Number(providerData.will_to_provide),
+        });
+      }
+
       toast({
         variant: "success",
         title: "تم حفظ التعديلات",
       });
     } catch (error) {
-      let details = error.message;
-      if (isDuplicateNicknameError(error))
+      let details = getErrorMessage(error);
+      if (isDuplicateNicknameError(details))
         details = "الاسم المستعار مستخدم من قبل مستخدم اخر";
       toast({
         variant: "destructive",
@@ -224,6 +236,7 @@ const ProviderPage = () => {
   });
 
   const [providerData, setProviderData] = useReducerState();
+
   useEffect(() => {
     if (providerServerSidePreferences) {
       setProviderData({
