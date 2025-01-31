@@ -27,11 +27,17 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDownIcon, RefreshCwIcon } from "lucide-react";
+import {
+  ArrowUpDownIcon,
+  EditIcon,
+  RefreshCwIcon,
+  UserXIcon,
+} from "lucide-react";
 import { useMemo, useState } from "preact/hooks";
 import EditUserModal from "./edit-user-modal.component";
 import { USER_TYPE_ENUM, USER_TYPE_ENUM_TO_READABLE } from "@/constants";
 import { Progress } from "@/components/ui/progress";
+import BlockUserModal from "./block-user-modal.component";
 
 const columnHelper = createColumnHelper();
 
@@ -41,6 +47,7 @@ const UsersTable = () => {
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [userToEditTgId, setUserToEditTgId] = useState(null);
+  const [userToBlockData, setUserToBlockData] = useState(null);
 
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -236,14 +243,53 @@ const UsersTable = () => {
       }),
 
       columnHelper.display({
+        id: "tags",
+        header: "الحالة",
+        cell: ({ cell }) => {
+          const { is_providing, is_busy, is_blocked } =
+            cell.row.original.preferences;
+
+          return (
+            <div className="flex gap-1 text-xs">
+              {is_providing && (
+                <p className="p-1 px-3 bg-green-900 w-fit rounded-full font-bold">
+                  متوفر لاستقبال الطلبات
+                </p>
+              )}
+              {is_busy && (
+                <p className="p-1 px-3 bg-cyan-900 w-fit rounded-full font-bold">
+                  في محادثة حاليا
+                </p>
+              )}
+              {is_blocked && (
+                <p className="p-1 px-3 bg-red-900 w-fit rounded-full font-bold">
+                  محظور
+                </p>
+              )}
+            </div>
+          );
+        },
+      }),
+      columnHelper.display({
         id: "actions",
         cell: ({ cell }) => (
-          <Button
-            size="sm"
-            onClick={() => setUserToEditTgId(cell.row.original.tg_id)}
-          >
-            تعديل
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              onClick={() => setUserToEditTgId(cell.row.original.tg_id)}
+            >
+              تعديل
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setUserToBlockData(cell.row.original)}
+            >
+              {cell.row.original.preferences?.is_blocked
+                ? "إلغاء الحظر"
+                : "حظر"}
+            </Button>
+          </div>
         ),
       }),
     ],
@@ -413,6 +459,12 @@ const UsersTable = () => {
         <EditUserModal
           userToEditTgId={userToEditTgId}
           onClose={() => setUserToEditTgId(0)}
+        />
+      )}
+      {!!userToBlockData && (
+        <BlockUserModal
+          userToBlockData={userToBlockData}
+          onClose={() => setUserToBlockData(null)}
         />
       )}
     </div>
