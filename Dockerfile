@@ -39,7 +39,7 @@ COPY --from=build /home/app/nginx /etc/nginx/conf.d
 
 COPY --from=build /home/app/dist /usr/share/nginx/html
 
-EXPOSE 80
+EXPOSE $DASHBOARD_PORT
 
 ENTRYPOINT ["nginx", "-g", "daemon off;"]
 
